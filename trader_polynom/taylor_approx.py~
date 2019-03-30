@@ -1,0 +1,98 @@
+import pandas as pd
+from scipy.optimize import curve_fit
+from matplotlib import pyplot as plt
+import calendar
+import datetime
+import numpy
+import math as mth
+
+
+#сколько последних моментов времени взять из csv файла для построения регрессии
+init_point = 410
+
+
+###############################
+def function(x,n,kward):
+    v = kward[0]
+    for i in range(1,n):
+        v += kward[i] * (x ** i)
+    return v
+###############################
+def make_func(n):
+    def funct(x,*kward):
+        v = kward[0]
+        for i in range(1,n):
+            v += kward[i] * (x ** i)
+        return v
+    return funct
+
+###############################
+# Mass_df = preprocess_mass(tickers,t,init_point)
+
+def taylor_approx(df,col_predict_point = 30,order_polynom = 5,p0_1 = 0.2):
+X = df['all_sec'].values
+Y = df['Main Price'].values
+
+
+# делим массивы на " обучающую " и " проверяемую " выборки
+m = 30 # количество проверяемых точек
+
+
+X_fit = X[:-m]
+Y_fit = Y[:-m]
+
+
+###############################
+#количество членов ряда
+n = 5
+
+#задаем параметры начального вектора
+p0 = numpy.zeros(n)
+
+p0[0] = my_average(Y,numpy.zeros(len(Y))) 
+
+p0[1] = 0.2
+
+for i in range(1,n):
+    p0[i] = p0[1] ** i
+
+    
+print("Начальный вектор p0")
+print(p0)
+
+#p0 = numpy.array((220,0.03,0.04,-0.13,-2.5,-0.4,2.5,0.8,0.2,0.1,0.01,0.01,-0.01))
+
+##################################
+
+
+
+params = curve_fit(make_func(len(p0)),X_fit,Y_fit,p0 = p0)
+
+print("Параметры апроксимации")
+
+print(params[0])
+
+approx_Y_t = function(X,len(params[0]),params[0])
+
+print("средне-квадратическое отколнение")
+
+print( "%1.2f$" % my_mean_sqeared_error(Y,approx_Y_t) )
+
+
+#print("Значения исходной функции и аппроксимационной")
+
+#print(Y,approx_Y)
+
+
+plt.axvline(x=X_fit[len(X_fit)-1], color='k', linestyle='--', linewidth=2)
+
+plt.plot(X,Y,label = 'dataset')
+plt.plot(X,approx_Y_t, label = 'approx_t')
+
+plt.legend(loc='lower left')
+
+plt.show()
+
+
+
+
