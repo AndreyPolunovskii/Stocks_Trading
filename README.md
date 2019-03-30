@@ -1,6 +1,6 @@
 # Stock's Trading
 
-   In this repository, laid out programs designed to predict the shares of companies using various machine learning methods.
+   In this repository placed programs which designed to predict the shares of companies. This programs are based on some machine learning methods
  
  For using this program you will need to install follow packages:
  
