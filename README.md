@@ -8,9 +8,9 @@
           
 For runing "parsing module", you will need execute:
 
-   ./RUN_PS
+    ./RUN_PS
    
 For runing "regression module", you will need execute:
 
-   ./RUN_RG
+    ./RUN_RG
   
