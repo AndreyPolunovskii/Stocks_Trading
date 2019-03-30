@@ -1,0 +1,99 @@
+import pandas as pd
+import os
+from my_finance_module import (par_fin,time,add_time,boosting_solver, preprocess_mass,fourier_transform)
+import calendar
+
+import warnings
+pd.options.mode.chained_assignment = None # отключаем ненужные исключения
+warnings.simplefilter(action='ignore',category = FutureWarning)
+
+
+
+os.environ['TZ']='America/New_York'
+time.tzset()
+t =time.localtime()
+clear = lambda: os.system('clear')
+MKdir_data = lambda t: os.system('mkdir -p data/'+ str(t.tm_mday)+"-"+str(t.tm_mon)+"-"+str(t.tm_year) )
+
+#tickers = ['TWTR','FB','GOOG','IQ','AMZN','TSLA','NVDA','AAPL']
+tickers=['IQ','AAPL','GOOG']#,'AMZN','FB','TWTR']
+#много времени занимает обработка нескольких компаний
+
+freq = 50 #(секунды) запрашиваем данные каждые 20 sec
+
+#сколько точек показывать
+print_point = 6
+
+df = pd.DataFrame(columns=['time','Main Price','Prev Close','Open','Bid','Ask','Volume'])
+df.index.names=['time']
+print_df=pd.DataFrame()
+Mass_df={}
+
+
+for i in range(len(tickers)):
+    Mass_df.update({tickers[i]:pd.DataFrame(df)})
+
+
+i1=0
+company=""
+
+
+###################
+fvar=open('VAR.txt','w')
+fvar.write(str(freq))
+fvar.close()
+###################
+
+
+MKdir_data(t)
+
+##################
+#если уже были созданы таблицы с данными
+for str1 in tickers:
+   path = 'data/full_data/'+str1+'.csv'
+   if os.path.exists(path):
+       Mass_df[str1] = pd.read_csv(path)
+       Mass_df[str1].index = Mass_df[str1]['time']
+       del Mass_df[str1]['time.1']
+       i1 += Mass_df[str1].shape[0]
+
+i1 = int( i1/len(tickers) )
+
+##################
+
+
+while(1):
+
+    t = time.localtime()
+    week_day = calendar.weekday(t.tm_year,t.tm_mon,t.tm_mday) + 1
+    if (t.tm_hour < 9 or (t.tm_hour == 9  and t.tm_min < 30 ) or t.tm_hour >= 16 or week_day == 6 or week_day == 7):
+        clear()
+        print('ожидаем начало торгов, время = '+str(t.tm_mday)+"-"+str(t.tm_mon)+"-"+str(t.tm_year)+"  "+str(t.tm_hour)+":"+str(t.tm_min)+":"+str(t.tm_sec) )
+        time.sleep(5)
+        t = time.localtime()
+        MKdir_data(t)
+        continue
+
+    i1 = i1 + 1
+    for tick in tickers:
+       mass=par_fin(tick)
+       buf = add_time(mass)
+       Mass_df[tick].loc[buf['time']]=[buf['time'],buf['Main Price'],buf['Prev Close'],buf['Open'],buf['Bid'],buf['Ask'],buf['Volume'] ]
+     
+      
+       print_df = pd.concat([ print_df , Mass_df[tick]['Main Price'][-print_point:] ],axis=1)
+       print_df.rename(columns = {'Main Price':tick},inplace = True)
+
+
+       Mass_df[tick].to_csv('data/' +str(t.tm_mday)+"-"+str(t.tm_mon)+"-"+str(t.tm_year)+'/'+tick+'.csv')
+       Mass_df[tick].to_csv('data/full_data/'+tick+'.csv')
+
+    clear()
+    print(print_df.tail(print_point))
+    print('количество записанных точек в среднем по компаниям : %d ' % i1 ) 
+    print_df = pd.DataFrame()
+    time.sleep(freq)
+
+
+
+

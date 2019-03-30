@@ -1,0 +1,3 @@
+#!/bin/sh
+
+python trader1.py
