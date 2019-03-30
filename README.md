@@ -1,4 +1,4 @@
-# -stock-trading
+# Stock's Trading
 
  In this repository,laid out programs designed to predict the shares of companies using various machine learning methods.
  
